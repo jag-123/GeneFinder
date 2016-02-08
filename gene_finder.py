@@ -160,9 +160,6 @@ def find_all_ORFs_both_strands(dna):
     result = frame_a + frame_b
     return result
 
-
-
-
 def longest_ORF(dna):
     """ Finds the longest ORF on both strands of the specified DNA and returns it
         as a string
@@ -170,9 +167,8 @@ def longest_ORF(dna):
     'ATGCTACATTCGCAT'
     """
     frames = find_all_ORFs_both_strands(dna)
-    longest = max(frames)
+    longest = max(frames or ['']) #if there are no frames, gives a value of ''
     return longest
-
 
 def longest_ORF_noncoding(dna, num_trials):
     """ Computes the maximum length of the longest ORF over num_trials shuffles
@@ -181,9 +177,12 @@ def longest_ORF_noncoding(dna, num_trials):
         dna: a DNA sequence
         num_trials: the number of random shuffles
         returns: the maximum length longest ORF """
-    # TODO: implement this
-    pass
-
+    ORFs = []
+    for trial in range(num_trials):
+        shuffled_dna = shuffle_string(dna) #creates a variable for the shuffled dna
+        longest_frame = len(longest_ORF(shuffled_dna)) #finds length of longest ORF of the shuffled dna
+        ORFs.append(longest_frame)
+    return max(ORFs) 
 
 def coding_strand_to_AA(dna):
     """ Computes the Protein encoded by a sequence of DNA.  This function
@@ -199,19 +198,36 @@ def coding_strand_to_AA(dna):
         >>> coding_strand_to_AA("ATGCCCGCTTT")
         'MPA'
     """
-    # TODO: implement this
-    pass
-
+    triples = []
+    amino_list = []
+    for i in range (0,len(dna),3):
+        triples.append(dna[i:i+3]) #occupies the list called triples with dna split up in 3s
+    for triplet in triples:
+        if len(triplet) == 3:
+            amino_acid = aa_table[triplet]
+            amino_list.append(amino_acid)
+    return ''.join(amino_list)
 
 def gene_finder(dna):
     """ Returns the amino acid sequences that are likely coded by the specified dna
-
         dna: a DNA sequence
         returns: a list of all amino acid sequences coded by the sequence dna.
     """
-    # TODO: implement this
-    pass
+    final_frame = []
+    threshold_frames = []
+    threshold = longest_ORF_noncoding(dna, 1500) #sets the threshold for length of dna
+    all_frames = find_all_ORFs_both_strands(dna)
+    for frame in all_frames:
+        if len(frame) > threshold:
+            threshold_frames.append(frame)#appends frames longer than the threshold to the list threshold_frames
+    for i in range(0,len(threshold_frames)):
+        final_frame.append(coding_strand_to_AA(threshold_frames[i]))#changes frames to amino acids and appends to final_frame
+    return final_frame
 
 if __name__ == "__main__":
     import doctest
-    doctest.run_docstring_examples(longest_ORF,globals(), verbose=True)
+    from load import load_seq
+    dna = load_seq("./data/X73525.fa")
+    #print dna
+    print gene_finder(dna)
+    #doctest.run_docstring_examples(longest_ORF,globals(), verbose=True)
